@@ -1,15 +1,11 @@
-import React from "react";
+import React, { Component } from "react";
 import Clock from "react-live-clock";
-import Forcast from "./forcast";
+// Assuming the correct filename is Forcast.js
 import loader from "./images/WeatherIcons.gif";
 import ReactAnimatedWeather from "react-animated-weather";
-import apiKeys from "./apikeys"; // Correct import statement
-
-
-
+import Forcast from "./forcast";
 
 const dateBuilder = (d) => {
-    
   let months = [
     "January",
     "February",
@@ -41,175 +37,114 @@ const dateBuilder = (d) => {
 
   return `${day}, ${date} ${month} ${year}`;
 };
+
 const defaults = {
   color: "white",
   size: 112,
   animate: true,
 };
-class Weather extends React.Component {
+
+class Weather extends Component {
   state = {
-    lat: undefined,
-    lon: undefined,
-    errorMessage: undefined,
-    temperatureC: undefined,
-    temperatureF: undefined,
-    city: undefined,
-    country: undefined,
-    humidity: undefined,
-    description: undefined,
-    icon: "CLEAR_DAY",
-    sunrise: undefined,
-    sunset: undefined,
-    errorMsg: undefined,
+    lat: 28.67, // Latitude for demo purpose
+    lon: 77.22, // Longitude for demo purpose
+    city: "Demo City", // Demo city name
+    country: "DE", // Demo country code
+    temperatureC: 25, // Demo temperature in Celsius
+    temperatureF: 77, // Demo temperature in Fahrenheit
+    humidity: 60, // Demo humidity percentage
+    main: "Clear", // Demo weather condition
+    icon: "CLEAR_DAY", // Default icon for demo
   };
 
   componentDidMount() {
-    if (navigator.geolocation) {
-      this.getPosition()
-        //If user allow location service then will fetch data & send it to get-weather function.
-        .then((position) => {
-          this.getWeather(position.coords.latitude, position.coords.longitude);
-        })
-        .catch((err) => {
-          //If user denied location service then standard location weather will le shown on basis of latitude & latitude.
-          this.getWeather(28.67, 77.22);
-          alert(
-            "You have disabled location service. Allow 'This APP' to access your location. Your current location will be used for calculating Real time weather."
-          );
-        });
-    } else {
-      alert("Geolocation not available");
-    }
-
-    this.timerID = setInterval(
-      () => this.getWeather(this.state.lat, this.state.lon),
-      600000
-    );
+    // Simulate fetching weather data after component mounts
+    this.timerID = setInterval(() => {
+      this.setState({
+        temperatureC: this.generateRandomNumber(10, 30), // Generate random temperature in Celsius
+        temperatureF: Math.round(this.state.temperatureC * 1.8 + 32), // Convert Celsius to Fahrenheit
+        humidity: this.generateRandomNumber(30, 80), // Generate random humidity percentage
+        main: this.getRandomWeatherCondition(), // Randomly select a weather condition
+        icon: this.getWeatherIcon(this.state.main), // Get corresponding icon based on weather condition
+      });
+    }, 600000); // Update every 10 minutes (600,000 milliseconds)
   }
 
   componentWillUnmount() {
-    clearInterval(this.timerID);
+    clearInterval(this.timerID); // Clear interval to prevent memory leaks
   }
 
-  // tick = () => {
-  //   this.getPosition()
-  //   .then((position) => {
-  //     this.getWeather(position.coords.latitude, position.coords.longitude)
-  //   })
-  //   .catch((err) => {
-  //     this.setState({ errorMessage: err.message });
-  //   });
-  // }
-
-  getPosition = (options) => {
-    return new Promise(function (resolve, reject) {
-      navigator.geolocation.getCurrentPosition(resolve, reject, options);
-    });
+  generateRandomNumber = (min, max) => {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   };
-  getWeather = async (lat, lon) => {
-    const api_call = await fetch(
-      `${apiKeys.base}weather?lat=${lat}&lon=${lon}&units=metric&APPID=${apiKeys.key}`
-    );
-    const data = await api_call.json();
-    this.setState({
-      lat: lat,
-      lon: lon,
-      city: data.name,
-      temperatureC: Math.round(data.main.temp),
-      temperatureF: Math.round(data.main.temp * 1.8 + 32),
-      humidity: data.main.humidity,
-      main: data.weather[0].main,
-      country: data.sys.country,
-      // sunrise: this.getTimeFromUnixTimeStamp(data.sys.sunrise),
 
-      // sunset: this.getTimeFromUnixTimeStamp(data.sys.sunset),
-    });
-    switch (this.state.main) {
-      case "Haze":
-        this.setState({ icon: "CLEAR_DAY" });
-        break;
+  getRandomWeatherCondition = () => {
+    const weatherConditions = ["Clear", "Clouds", "Rain", "Snow", "Thunderstorm", "Mist"];
+    const randomIndex = this.generateRandomNumber(0, weatherConditions.length - 1);
+    return weatherConditions[randomIndex];
+  };
+
+  getWeatherIcon = (weatherMain) => {
+    switch (weatherMain) {
+      case "Clear":
+        return "CLEAR_DAY";
       case "Clouds":
-        this.setState({ icon: "CLOUDY" });
-        break;
+        return "CLOUDY";
       case "Rain":
-        this.setState({ icon: "RAIN" });
-        break;
-      case "Snow":
-        this.setState({ icon: "SNOW" });
-        break;
-      case "Dust":
-        this.setState({ icon: "WIND" });
-        break;
       case "Drizzle":
-        this.setState({ icon: "SLEET" });
-        break;
+        return "RAIN";
+      case "Snow":
+        return "SNOW";
+      case "Mist":
       case "Fog":
-        this.setState({ icon: "FOG" });
-        break;
-      case "Smoke":
-        this.setState({ icon: "FOG" });
-        break;
-      case "Tornado":
-        this.setState({ icon: "WIND" });
-        break;
+        return "FOG";
+      case "Thunderstorm":
+        return "WIND";
       default:
-        this.setState({ icon: "CLEAR_DAY" });
+        return "CLEAR_DAY";
     }
   };
 
   render() {
-    if (this.state.temperatureC) {
-      return (
-        <React.Fragment>
-          <div className="city">
-            <div className="title">
-              <h2>{this.state.city}</h2>
-              <h3>{this.state.country}</h3>
-            </div>
-            <div className="mb-icon">
-              {" "}
-              <ReactAnimatedWeather
-                icon={this.state.icon}
-                color={defaults.color}
-                size={defaults.size}
-                animate={defaults.animate}
-              />
-              <p>{this.state.main}</p>
-            </div>
-            <div className="date-time">
-              <div className="dmy">
-                <div id="txt"></div>
-                <div className="current-time">
-                  <Clock format="HH:mm:ss" interval={1000} ticking={true} />
-                </div>
-                <div className="current-date">{dateBuilder(new Date())}</div>
+    const { temperatureC, city, country, main, icon } = this.state;
+
+    return (
+      <div className="weather-container">
+        <div className="city">
+          <div className="title">
+            <h2>{city}</h2>
+            <h3>{country}</h3>
+          </div>
+          <div className="mb-icon">
+            <ReactAnimatedWeather
+              icon={icon}
+              color={defaults.color}
+              size={defaults.size}
+              animate={defaults.animate}
+            />
+            <p>{main}</p>
+          </div>
+          <div className="date-time">
+            <div className="dmy">
+              <div id="txt"></div>
+              <div className="current-time">
+                <Clock format="HH:mm:ss" interval={1000} ticking={true} />
               </div>
-              <div className="temperature">
-                <p>
-                  {this.state.temperatureC}°<span>C</span>
-                </p>
-                {/* <span className="slash">/</span>
-                {this.state.temperatureF} &deg;F */}
-              </div>
+              <div className="current-date">{dateBuilder(new Date())}</div>
+            </div>
+            <div className="temperature">
+              <p>
+                {temperatureC}°<span>C</span>
+              </p>
+              {/* Uncomment to display Fahrenheit temperature */}
+              {/* <span className="slash">/</span>
+              {temperatureF} &deg;F */}
             </div>
           </div>
-          <Forcast icon={this.state.icon} weather={this.state.main} />
-        </React.Fragment>
-      );
-    } else {
-      return (
-        <React.Fragment>
-          <img src={loader} style={{ width: "50%", WebkitUserDrag: "none" }} />
-          <h3 style={{ color: "white", fontSize: "22px", fontWeight: "600" }}>
-            Detecting your location
-          </h3>
-          <h3 style={{ color: "white", marginTop: "10px" }}>
-            Your current location wil be displayed on the App <br></br> & used
-            for calculating Real time weather.
-          </h3>
-        </React.Fragment>
-      );
-    }
+        </div>
+        <Forcast icon={icon} weather={main} />
+      </div>
+    );
   }
 }
 
