@@ -10,22 +10,25 @@ function Forcast(props) {
     const [query, setQuery] = useState("");
     const [error, setError] = useState("");
     const [weather, setWeather] = useState({});
+    const [searchWeather, setSearchWeather] = useState({});
   
     const search = (city) => {
-      axios
+      if (!city || city.trim() === "") return;
       
+      axios
         .get(
           `${apiKeys.base}weather?q=${
             city != "[object Object]" ? city : query
           }&units=metric&APPID=${apiKeys.key}`
         )
         .then((response) => {
-          setWeather(response.data);
+          setSearchWeather(response.data);
           setQuery("");
+          setError("");
         })
         .catch(function (error) {
           console.log(error);
-          setWeather("");
+          setSearchWeather({});
           setQuery("");
           setError({ message: "Not Found", query: query });
         });
@@ -44,8 +47,11 @@ function Forcast(props) {
     };
   
     useEffect(() => {
-      search("Delhi");
-    }, []);
+      // Set the weather data from props if available
+      if (props.weatherData) {
+        setWeather(props.weatherData);
+      }
+    }, [props.weatherData]);
 
   
     return (
@@ -105,13 +111,62 @@ function Forcast(props) {
                 <li>
                   Visibility{" "}
                   <span className="temp">
-                    {Math.round(weather.visibility)} mi
+                    {Math.round(weather.visibility / 1000)} km
                   </span>
                 </li>
                 <li>
                   Wind Speed{" "}
                   <span className="temp">
-                    {Math.round(weather.wind.speed)} Km/h
+                    {Math.round(weather.wind.speed)} m/s
+                  </span>
+                </li>
+                <li>
+                  Pressure{" "}
+                  <span className="temp">
+                    {Math.round(weather.main.pressure)} hPa
+                  </span>
+                </li>
+              </div>
+            ) : typeof searchWeather.main != "undefined" ? (
+              <div>
+                {" "}
+                <li className="cityHead">
+                  <p>
+                    {searchWeather.name}, {searchWeather.sys.country}
+                  </p>
+                  <img
+                    className="temp"
+                    src={`https://openweathermap.org/img/wn/${searchWeather.weather[0].icon}.png`}
+                  />
+                </li>
+                <li>
+                  Temperature{" "}
+                  <span className="temp">
+                    {Math.round(searchWeather.main.temp)}°c ({searchWeather.weather[0].main})
+                  </span>
+                </li>
+                <li>
+                  Humidity{" "}
+                  <span className="temp">
+                    {Math.round(searchWeather.main.humidity)}%
+                  </span>
+                </li>
+                <li>
+                  Visibility{" "}
+                  <span className="temp">
+                    {Math.round(searchWeather.visibility / 1000)} km
+                  </span>
+                </li>
+                <li>
+                  Wind Speed{" "}
+                  <span className="temp">
+                    {Math.round(searchWeather.wind.speed)} m/s
+                  </span>
+                </li>
+                <li>
+                  Pressure{" "}
+                  <span className="temp">
+                    {Math.round(searchWeather.main.pressure)} hPa
                   </span>
                 </li>
               </div>
